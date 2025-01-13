@@ -5,6 +5,7 @@ import static io.prometheus.cloudwatch.CachingDimensionSource.DimensionCacheConf
 import io.prometheus.client.Collector;
 import io.prometheus.client.Collector.Describable;
 import io.prometheus.client.Counter;
+import io.prometheus.cloudwatch.CachingDimensionSource.DimensionCacheConfig;
 import io.prometheus.cloudwatch.DataGetter.MetricRuleData;
 import java.io.FileReader;
 import java.io.IOException;
@@ -355,11 +356,25 @@ public class CloudWatchCollector extends Collector implements Describable {
       }
 
       if (yamlMetricRule.containsKey("aws_account_label")) {
-        if (rule.awsAccountLabel == null) {
-          throw new IllegalArgumentException(
-              "aws_account_label is only supported when aws_account_id is set");
+      Object labelData = yamlMetricRule.get("aws_account_label");
+
+        if (labelData instanceof String) {
+            rule.awsAccountLabels = List.of((String) labelData); // 단일 레이블 처리
+        } else if (labelData instanceof List) {
+            rule.awsAccountLabels = (List<String>) labelData; // 다중 계정 레이블 처리
+        } else {
+            throw new IllegalArgumentException(
+                "Invalid type for aws_account_label: Must be String or List<String>"
+            );
         }
-        rule.awsAccountLabel = (String) yamlMetricRule.get("aws_account_label");
+
+        // 레이블 개수와 계정 개수가 일치하는지 검증
+        if (rule.awsAccountIds != null && rule.awsAccountLabels != null &&
+            rule.awsAccountIds.size() != rule.awsAccountLabels.size()) {
+            throw new IllegalArgumentException(
+                "aws_account_labels size must match aws_account_ids size"
+            );
+        }
       }
     }
 

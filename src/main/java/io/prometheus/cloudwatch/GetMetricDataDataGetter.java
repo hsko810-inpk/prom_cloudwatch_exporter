@@ -74,24 +74,32 @@ class GetMetricDataDataGetter implements DataGetter {
     List<MetricDataQuery> queries = new ArrayList<>();
 
     if (rule.awsAccountIds != null && !rule.awsAccountIds.isEmpty()) {
-        for (String accountId : rule.awsAccountIds) {
+        for (int i = 0; i < rule.awsAccountIds.size(); i++) {
+            String accountId = rule.awsAccountIds.get(i);
+            String accountLabel = (rule.awsAccountLabels != null && rule.awsAccountLabels.size() > i)
+                ? rule.awsAccountLabels.get(i)
+                : accountId; // 레이블이 없으면 계정 ID 사용
+
             MetricDataQuery.Builder builder = MetricDataQuery.builder();
-            builder.id("i" + UUID.randomUUID().toString().replace("-", "") + "_" + accountId);
-            builder.label(MetricLabels.labelFor(stat, dl) + "_" + accountId);
+            String id = "i" + UUID.randomUUID().toString().replace("-", "") + "_" + accountId;
+            builder.id(id);
+            builder.label(MetricLabels.labelFor(stat, dl) + "_" + accountLabel);
             builder.metricStat(metricStat);
-            builder.accountId(accountId); // AWS Account ID 설정
+            builder.accountId(accountId);
             queries.add(builder.build());
         }
     } else if (rule.awsAccountId != null) {
         MetricDataQuery.Builder builder = MetricDataQuery.builder();
-        builder.id("i" + UUID.randomUUID().toString().replace("-", ""));
+        String id = "i" + UUID.randomUUID().toString().replace("-", "");
+        builder.id(id);
         builder.label(MetricLabels.labelFor(stat, dl));
         builder.metricStat(metricStat);
-        builder.accountId(rule.awsAccountId); // 단일 AWS Account ID 설정
+        builder.accountId(rule.awsAccountId);
         queries.add(builder.build());
     } else {
         MetricDataQuery.Builder builder = MetricDataQuery.builder();
-        builder.id("i" + UUID.randomUUID().toString().replace("-", ""));
+        String id = "i" + UUID.randomUUID().toString().replace("-", "");
+        builder.id(id);
         builder.label(MetricLabels.labelFor(stat, dl));
         builder.metricStat(metricStat);
         queries.add(builder.build());
