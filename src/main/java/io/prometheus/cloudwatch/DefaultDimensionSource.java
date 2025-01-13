@@ -2,7 +2,6 @@ package io.prometheus.cloudwatch;
 
 import io.prometheus.client.Counter;
 import io.prometheus.cloudwatch.DimensionSource.DimensionData;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -75,12 +74,10 @@ final class DefaultDimensionSource implements DimensionSource {
     ListMetricsRequest.Builder requestBuilder = ListMetricsRequest.builder();
     requestBuilder.namespace(rule.awsNamespace);
     requestBuilder.metricName(rule.awsMetricName);
-
+    
     if (rule.awsAccountIds != null && !rule.awsAccountIds.isEmpty()) {
       requestBuilder.includeLinkedAccounts(true);
-      for (String accountId : rule.awsAccountIds) {
-          requestBuilder.accountId(accountId);
-      }
+      
     }
     // 10800 seconds is 3 hours, this setting causes metrics older than 3 hours to not be listed
     if (rule.rangeSeconds < 10800) {

@@ -338,28 +338,29 @@ public class CloudWatchCollector extends Collector implements Describable {
 
       if (yamlMetricRule.containsKey("aws_account_id")) {
         if (!rule.useGetMetricData) {
-            throw new IllegalArgumentException(
-                "aws_account_id is only supported when use_get_metric_data is true");
+          throw new IllegalArgumentException(
+              "aws_account_id is only supported when use_get_metric_data is true");
         }
-    
+
         Object accountData = yamlMetricRule.get("aws_account_id");
-    
+
         if (accountData instanceof String) {
-            rule.awsAccountIds = List.of((String) accountData); // 단일 계정일 경우 리스트로 변환
+          rule.awsAccountIds = List.of((String) accountData); // 단일 계정일 경우 리스트로 변환
         } else if (accountData instanceof List) {
-            rule.awsAccountIds = (List<String>) accountData; // 여러 계정을 리스트로 처리
+          rule.awsAccountIds = (List<String>) accountData; // 여러 계정을 리스트로 처리
         } else {
-            throw new IllegalArgumentException("Invalid type for aws_account_id: Must be String or List<String>");
+          throw new IllegalArgumentException(
+              "Invalid type for aws_account_id: Must be String or List<String>");
         }
       }
 
-      if(yamlMetricRule.containsKey("aws_account_label")) {
+      if (yamlMetricRule.containsKey("aws_account_label")) {
         if (rule.awsAccountLabel == null) {
-          throw new IllegalArgumentException("aws_account_label is only supported when aws_account_id is set");
+          throw new IllegalArgumentException(
+              "aws_account_label is only supported when aws_account_id is set");
+        }
+        rule.awsAccountLabel = (String) yamlMetricRule.get("aws_account_label");
       }
-      rule.awsAccountLabel = (String) yamlMetricRule.get("aws_account_label");
-      }
-
     }
 
     DimensionSource dimensionSource =

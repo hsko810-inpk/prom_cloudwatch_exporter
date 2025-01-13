@@ -63,7 +63,7 @@ class GetMetricDataDataGetter implements DataGetter {
       for (List<Dimension> dl : dimensionsList) {
         Metric metric = buildMetric(dl);
         MetricStat metricStat = buildMetricStat(stat, metric);
-        queries.addAll(buildQueries(stat, metricStat, rule));
+        queries.addAll(buildQueries(stat, dl, metricStat, rule));
       }
     }
     metricRequestedForBilling += queries.size();
@@ -74,37 +74,25 @@ class GetMetricDataDataGetter implements DataGetter {
     List<MetricDataQuery> queries = new ArrayList<>();
 
     if (rule.awsAccountIds != null && !rule.awsAccountIds.isEmpty()) {
-        // 멀티 계정 처리
         for (String accountId : rule.awsAccountIds) {
             MetricDataQuery.Builder builder = MetricDataQuery.builder();
-            String id = "i" + UUID.randomUUID().toString().replace("-", "") + "_" + accountId; // 계정별 고유 ID
-            builder.id(id);
-
-            String label = MetricLabels.labelFor(stat, dl) + "_" + accountId; // 계정 정보를 포함한 레이블
-            builder.label(label);
+            builder.id("i" + UUID.randomUUID().toString().replace("-", "") + "_" + accountId);
+            builder.label(MetricLabels.labelFor(stat, dl) + "_" + accountId);
             builder.metricStat(metricStat);
-            builder.accountId(accountId); // 계정별 accountId 설정
+            builder.accountId(accountId); // AWS Account ID 설정
             queries.add(builder.build());
         }
     } else if (rule.awsAccountId != null) {
-        // 단일 계정 처리
         MetricDataQuery.Builder builder = MetricDataQuery.builder();
-        String id = "i" + UUID.randomUUID().toString().replace("-", "");
-        builder.id(id);
-
-        String label = MetricLabels.labelFor(stat, dl);
-        builder.label(label);
+        builder.id("i" + UUID.randomUUID().toString().replace("-", ""));
+        builder.label(MetricLabels.labelFor(stat, dl));
         builder.metricStat(metricStat);
-        builder.accountId(rule.awsAccountId);
+        builder.accountId(rule.awsAccountId); // 단일 AWS Account ID 설정
         queries.add(builder.build());
     } else {
-     
         MetricDataQuery.Builder builder = MetricDataQuery.builder();
-        String id = "i" + UUID.randomUUID().toString().replace("-", "");
-        builder.id(id);
-
-        String label = MetricLabels.labelFor(stat, dl);
-        builder.label(label);
+        builder.id("i" + UUID.randomUUID().toString().replace("-", ""));
+        builder.label(MetricLabels.labelFor(stat, dl));
         builder.metricStat(metricStat);
         queries.add(builder.build());
     }
