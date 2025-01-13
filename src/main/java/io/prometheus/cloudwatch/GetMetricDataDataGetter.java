@@ -63,25 +63,53 @@ class GetMetricDataDataGetter implements DataGetter {
       for (List<Dimension> dl : dimensionsList) {
         Metric metric = buildMetric(dl);
         MetricStat metricStat = buildMetricStat(stat, metric);
-        MetricDataQuery query = buildQuery(stat, dl, metricStat);
-        queries.add(query);
+        queries.addAll(buildQueries(stat, metricStat, rule));
       }
     }
     metricRequestedForBilling += queries.size();
     return queries;
   }
 
-  private MetricDataQuery buildQuery(String stat, List<Dimension> dl, MetricStat metric) {
-    // random id - we don't care about it
-    String id = "i" + UUID.randomUUID().toString().replace("-", "");
-    MetricDataQuery.Builder builder = MetricDataQuery.builder();
-    builder.id(id);
+  private List<MetricDataQuery> buildQueries(String stat, List<Dimension> dl, MetricStat metricStat, MetricRule rule) {
+    List<MetricDataQuery> queries = new ArrayList<>();
 
-    // important - used to locate back the results
-    String label = MetricLabels.labelFor(stat, dl);
-    builder.label(label);
-    builder.metricStat(metric);
-    return builder.build();
+    if (rule.awsAccountIds != null && !rule.awsAccountIds.isEmpty()) {
+        // 멀티 계정 처리
+        for (String accountId : rule.awsAccountIds) {
+            MetricDataQuery.Builder builder = MetricDataQuery.builder();
+            String id = "i" + UUID.randomUUID().toString().replace("-", "") + "_" + accountId; // 계정별 고유 ID
+            builder.id(id);
+
+            String label = MetricLabels.labelFor(stat, dl) + "_" + accountId; // 계정 정보를 포함한 레이블
+            builder.label(label);
+            builder.metricStat(metricStat);
+            builder.accountId(accountId); // 계정별 accountId 설정
+            queries.add(builder.build());
+        }
+    } else if (rule.awsAccountId != null) {
+        // 단일 계정 처리
+        MetricDataQuery.Builder builder = MetricDataQuery.builder();
+        String id = "i" + UUID.randomUUID().toString().replace("-", "");
+        builder.id(id);
+
+        String label = MetricLabels.labelFor(stat, dl);
+        builder.label(label);
+        builder.metricStat(metricStat);
+        builder.accountId(rule.awsAccountId);
+        queries.add(builder.build());
+    } else {
+     
+        MetricDataQuery.Builder builder = MetricDataQuery.builder();
+        String id = "i" + UUID.randomUUID().toString().replace("-", "");
+        builder.id(id);
+
+        String label = MetricLabels.labelFor(stat, dl);
+        builder.label(label);
+        builder.metricStat(metricStat);
+        queries.add(builder.build());
+    }
+
+    return queries;
   }
 
   private MetricStat buildMetricStat(String stat, Metric metric) {
